@@ -1,7 +1,12 @@
-export default function handler(req, res) {
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "POST only" });
+  }
+
+  const body = req.body;
+
   res.status(200).json({
-    method: req.method,
-    message: "Backend received your request",
-    query: req.query
+    message: "Backend received POST data",
+    body: body
   });
 }
