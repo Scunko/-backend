@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   try {
     // 1) Put your Stripe Price ID here (starts with price_)
-    const PRICE_ID = "price_YOUR_PRICE_ID_HERE";
+    const PRICE_ID = "prod_Tg39rO4JqpCI3S";
 
     // 2) Create a Checkout Session for a subscription
     const session = await stripe.checkout.sessions.create({
