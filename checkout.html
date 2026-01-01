@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Subscribe</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://js.stripe.com/v3/"></script>
 
   <style>
@@ -85,10 +86,13 @@
   </div>
 
   <script>
-    const stripe = Stripe("pk_test_51SiglOELCSEmD9SirozxZHPwPJkSWh62LQdeYjZ3lhgGUNrNBKJbOs1VlNuo0WE5PeZjEPFmHzslGVrOvKQNk87M00HWIgJNl4"); // 🔴 YOUR PUBLIC KEY
+    const stripe = Stripe("pk_test_XXXXXXXXXXXXXXXXXXXXXXXX"); // 🔴 YOUR TEST PUBLIC KEY
     const elements = stripe.elements();
     const card = elements.create("card");
     card.mount("#card-element");
+
+    // 🔴 PUT YOUR TEST PRICE ID HERE
+    const PRICE_ID = "price_1SkgHyELCSEmD9SiEn4rkCAl";
 
     document.getElementById("subscribe").onclick = async () => {
       const email = document.getElementById("email").value;
@@ -112,11 +116,17 @@
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           paymentMethodId: paymentMethod.id,
-          email
+          email,
+          priceId: PRICE_ID
         })
       });
 
       const data = await res.json();
+
+      if (!data.clientSecret) {
+        errorDiv.textContent = data.error || "Server error";
+        return;
+      }
 
       const confirm = await stripe.confirmCardPayment(data.clientSecret);
 
