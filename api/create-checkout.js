@@ -8,24 +8,21 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1) Put your Stripe Price ID here (starts with price_)
-    const PRICE_ID = "price_1Sih3YELCSEmD9SiaiKG67Kv";
-
-    // 2) Create a Checkout Session for a subscription
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price: PRICE_ID, quantity: 1 }],
-
-      // These are where Stripe sends the user after paying
-      success_url: "https://www.donationheaven.com/success",
-      cancel_url: "https://www.donationheaven.com/canceled",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price: "price_1Sih3YELCSEmD9SiaiKG67Kv",
+          quantity: 1,
+        },
+      ],
+      success_url: "https://your-site.com/success",
+      cancel_url: "https://your-site.com/cancel",
     });
 
-    // 3) Send the checkout link back to your site
-    return res.status(200).json({ url: session.url });
+    res.status(200).json({ url: session.url });
   } catch (err) {
-    return res.status(500).json({
-      error: err.message || "Stripe error",
-    });
+    res.status(500).json({ error: err.message });
   }
 }
