@@ -6,69 +6,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://js.stripe.com/v3/"></script>
 
-  <style>
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: radial-gradient(circle at top, #0f172a, #020617);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: Inter, system-ui, sans-serif;
-      color: white;
-    }
+ <style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: radial-gradient(circle at top, #0f172a, #020617);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Inter, system-ui, sans-serif;
+    color: white;
+  }
 
-    .box {
-      width: 560px;
-      padding: 40px;
-      border-radius: 18px;
-      background: rgba(15, 23, 42, 0.95);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-    }
+  .box {
+    width: 560px;
+    padding: 40px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.95);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+  }
 
-    h1 {
-      text-align: center;
-      margin-bottom: 8px;
-    }
+  h1 {
+    text-align: center;
+    margin-bottom: 8px;
+  }
 
-    p {
-      text-align: center;
-      opacity: 0.8;
-      margin-bottom: 30px;
-    }
+  p {
+    text-align: center;
+    opacity: 0.8;
+    margin-bottom: 30px;
+  }
 
-    input {
-      width: 100%;
-      padding: 14px;
-      border-radius: 10px;
-      border: none;
-      margin-bottom: 16px;
-      font-size: 16px;
-    }
+  input {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    margin-bottom: 16px;
+    font-size: 16px;
+    background: #020617;
+    color: white;
+  }
 
-    #card-element {
-      padding: 16px;
-      border-radius: 12px;
-      background: #020617;
-      margin-bottom: 20px;
-    }
+  input::placeholder {
+    color: #94a3b8;
+  }
 
-    button {
-      width: 100%;
-      padding: 18px;
-      font-size: 18px;
-      border-radius: 14px;
-      border: none;
-      background: #22c55e;
-      cursor: pointer;
-    }
+  #card-element {
+    padding: 16px;
+    border-radius: 12px;
+    background: #020617;
+    margin-bottom: 20px;
+  }
 
-    .error {
-      color: #f87171;
-      margin-top: 12px;
-      text-align: center;
-    }
-  </style>
+  button {
+    width: 100%;
+    padding: 18px;
+    font-size: 18px;
+    border-radius: 14px;
+    border: none;
+    background: #22c55e;
+    color: black;
+    cursor: pointer;
+  }
+
+  .error {
+    color: #f87171;
+    margin-top: 12px;
+    text-align: center;
+  }
+</style>
+
 </head>
 
 <body>
