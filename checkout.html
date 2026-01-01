@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checkout</title>
+
+  <!-- Stripe.js -->
+  <script src="https://js.stripe.com/v3/"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      width: 400px;
+      background: #020617;
+      padding: 24px;
+      border-radius: 12px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 16px;
+      background: #22c55e;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #card-element {
+      margin-top: 12px;
+      padding: 12px;
+      background: white;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h2>Subscribe — $10 / month</h2>
+
+    <div id="card-element"></div>
+
+    <button id="submit">Subscribe</button>
+
+    <div id="error"></div>
+  </div>
+
+  <script>
+    const stripe = Stripe("pk_TEST_KEY_HERE"); // public key ONLY
+    const elements = stripe.elements();
+    const card = elements.create("card");
+    card.mount("#card-element");
+
+    document.getElementById("submit").addEventListener("click", async () => {
+      const { paymentMethod, error } = await stripe.createPaymentMethod({
+        type: "card",
+        card: card,
+      });
+
+      if (error) {
+        document.getElementById("error").innerText = error.message;
+        return;
+      }
+
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethodId: paymentMethod.id
+        })
+      });
+
+      const data = await res.json();
+      alert("Subscription created!");
+    });
+  </script>
+</body>
+</html>
