@@ -2,16 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Subscribe — $10 / month</title>
-
-  <!-- Stripe JS -->
+  <title>Subscribe</title>
   <script src="https://js.stripe.com/v3/"></script>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
       margin: 0;
       min-height: 100vh;
@@ -19,113 +13,119 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: Inter, system-ui, sans-serif;
       color: white;
     }
 
-    .checkout-box {
+    .box {
       width: 560px;
-      padding: 36px;
+      padding: 40px;
       border-radius: 18px;
       background: rgba(15, 23, 42, 0.95);
-      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
     }
 
     h1 {
-      font-size: 30px;
-      margin-bottom: 28px;
       text-align: center;
+      margin-bottom: 8px;
     }
 
-    .price {
+    p {
       text-align: center;
-      font-size: 18px;
-      margin-bottom: 28px;
-      opacity: 0.9;
+      opacity: 0.8;
+      margin-bottom: 30px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 16px;
+      font-size: 16px;
     }
 
     #card-element {
-      background: #020617;
-      padding: 18px;
+      padding: 16px;
       border-radius: 12px;
-      border: 1px solid #1e293b;
-      font-size: 18px;
+      background: #020617;
+      margin-bottom: 20px;
     }
 
     button {
       width: 100%;
-      height: 58px;
-      margin-top: 28px;
-      background: #22c55e;
-      border: none;
-      border-radius: 14px;
+      padding: 18px;
       font-size: 18px;
-      font-weight: 600;
+      border-radius: 14px;
+      border: none;
+      background: #22c55e;
       cursor: pointer;
-      color: black;
     }
 
-    button:hover {
-      background: #16a34a;
-    }
-
-    .status {
-      margin-top: 18px;
-      font-size: 14px;
+    .error {
+      color: #f87171;
+      margin-top: 12px;
       text-align: center;
-      opacity: 0.9;
     }
   </style>
 </head>
-<body>
 
-  <div class="checkout-box">
+<body>
+  <div class="box">
     <h1>Subscribe</h1>
-    <div class="price">$10 / month</div>
+    <p>$10 / month</p>
+
+    <input id="email" type="email" placeholder="Email" />
 
     <div id="card-element"></div>
 
-    <button id="subscribeBtn">Subscribe</button>
+    <button id="subscribe">Subscribe</button>
 
-    <div class="status" id="statusText"></div>
+    <div class="error" id="error"></div>
   </div>
 
   <script>
-    // 🔑 USE YOUR *PUBLIC* KEY ONLY (pk_)
-    const stripe = Stripe("pk_live_51SiglOELCSEmD9SiTnTGv5dVaWEj23wysxfuKzrSKVoagNopytXWamT8IiBdWB90zwrim9aA5K67rwsUSZE0upIj00r0bIs5dG");
-
+    const stripe = Stripe("pk_live_51SiglOELCSEmD9SiTnTGv5dVaWEj23wysxfuKzrSKVoagNopytXWamT8IiBdWB90zwrim9aA5K67rwsUSZE0upIj00r0bIs5dG"); // 🔴 YOUR PUBLIC KEY
     const elements = stripe.elements();
-    const card = elements.create("card", {
-      style: {
-        base: {
-          color: "#ffffff",
-          fontSize: "18px",
-          "::placeholder": { color: "#64748b" }
-        }
-      }
-    });
-
+    const card = elements.create("card");
     card.mount("#card-element");
 
-    const statusText = document.getElementById("statusText");
+    document.getElementById("subscribe").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const errorDiv = document.getElementById("error");
 
-    document.getElementById("subscribeBtn").onclick = async () => {
-      statusText.textContent = "Processing…";
+      errorDiv.textContent = "";
 
-      const response = await fetch(
-        "https://subscription-backend-wine.vercel.app/api/create-checkout",
-        { method: "POST" }
-      );
+      const { paymentMethod, error } = await stripe.createPaymentMethod({
+        type: "card",
+        card,
+        billing_details: { email }
+      });
 
-      const data = await response.json();
+      if (error) {
+        errorDiv.textContent = error.message;
+        return;
+      }
 
-      if (data.url) {
-        window.location.href = data.url;
+      const res = await fetch("/api/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethodId: paymentMethod.id,
+          email
+        })
+      });
+
+      const data = await res.json();
+
+      const confirm = await stripe.confirmCardPayment(data.clientSecret);
+
+      if (confirm.error) {
+        errorDiv.textContent = confirm.error.message;
       } else {
-        statusText.textContent = "Error creating checkout.";
+        alert("Subscription active!");
       }
     };
   </script>
-
 </body>
 </html>
