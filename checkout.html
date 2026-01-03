@@ -97,7 +97,7 @@
   </div>
 
   <script>
-    const stripe = Stripe("pk_live_XXXXXXXXXXXXXXXXXXXXXXXX"); // YOUR LIVE KEY
+    const stripe = Stripe("pk_live_51SiglOELCSEmD9SiTnTGv5dVaWEj23wysxfuKzrSKVoagNopytXWamT8IiBdWB90zwrim9aA5K67rwsUSZE0upIj00r0bIs5dG"); // YOUR LIVE KEY
 
     const elements = stripe.elements();
     const card = elements.create("card", {
@@ -113,7 +113,7 @@
 
     card.mount("#card-element");
 
-    const PRICE_ID = "price_XXXXXXXXXXXXXXXX"; // LIVE PRICE ID
+    const PRICE_ID = "price_1Sih3YELCSEmD9SiaiKG67Kv"; // LIVE PRICE ID
 
     document.getElementById("subscribe").onclick = async () => {
       const email = document.getElementById("email").value;
