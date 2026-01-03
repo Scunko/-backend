@@ -1,86 +1,166 @@
-<script>
-  // LIVE publishable key
-  const stripe = Stripe("pk_live_51SiglOELCSEmD9SiTnTGv5dVaWEj23wysxfuKzrSKVoagNopytXWamT8IiBdWB90zwrim9aA5K67rwsUSZE0upIj00r0bIs5dG");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Octo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://js.stripe.com/v3/"></script>
 
-  const elements = stripe.elements({
-    appearance: {
-      theme: "night",
-      variables: {
-        colorText: "#ffffff",
-        colorTextPlaceholder: "#94a3b8",
-        colorBackground: "#020617",
-        colorDanger: "#f87171",
-        fontSizeBase: "16px"
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      color: white;
+    }
+
+    .box {
+      width: 520px;
+      padding: 36px;
+      border-radius: 18px;
+      background: rgba(15, 23, 42, 0.96);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    p {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 28px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      margin-bottom: 16px;
+      font-size: 16px;
+      background: #020617;
+      color: white;
+      outline: none;
+    }
+
+    input::placeholder {
+      color: #94a3b8;
+    }
+
+    #card-element {
+      padding: 14px;
+      border-radius: 12px;
+      background: #020617;
+      margin-bottom: 18px;
+      border: 1px solid #1e293b;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      font-size: 18px;
+      border-radius: 14px;
+      border: none;
+      background: #22c55e;
+      color: black;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .error {
+      color: #f87171;
+      margin-top: 14px;
+      text-align: center;
+      min-height: 20px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>Octo</h1>
+    <p>$10</p>
+
+    <input id="email" type="email" placeholder="Email" />
+
+    <div id="card-element"></div>
+
+    <button id="subscribe">Purchase</button>
+
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    const stripe = Stripe("pk_live_XXXXXXXXXXXXXXXXXXXXXXXX"); // YOUR LIVE KEY
+
+    const elements = stripe.elements();
+    const card = elements.create("card", {
+      style: {
+        base: {
+          color: "#ffffff",
+          fontSize: "16px",
+          "::placeholder": { color: "#94a3b8" }
+        },
+        invalid: { color: "#f87171" }
       }
-    }
-  });
-
-  const card = elements.create("card", {
-    style: {
-      base: {
-        color: "#ffffff",
-        fontSize: "16px",
-        "::placeholder": {
-          color: "#94a3b8"
-        }
-      },
-      invalid: {
-        color: "#f87171"
-      }
-    }
-  });
-
-  card.mount("#card-element");
-
-  // LIVE price ID (must be created in LIVE mode)
-  const PRICE_ID = "price_1Sih3YELCSEmD9SiaiKG67Kv";
-
-  // ✅ FIXED: button ID now matches HTML
-  document.getElementById("subscribe").onclick = async () => {
-    const email = document.getElementById("email").value;
-    const errorDiv = document.getElementById("error");
-
-    errorDiv.textContent = "";
-
-    if (!email) {
-      errorDiv.textContent = "Please enter an email.";
-      return;
-    }
-
-    const { paymentMethod, error } = await stripe.createPaymentMethod({
-      type: "card",
-      card,
-      billing_details: { email }
     });
 
-    if (error) {
-      errorDiv.textContent = error.message;
-      return;
-    }
+    card.mount("#card-element");
 
-    const res = await fetch("/api/create-subscription", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        paymentMethodId: paymentMethod.id,
-        email: email,
-        priceId: PRICE_ID
-      })
-    });
+    const PRICE_ID = "price_XXXXXXXXXXXXXXXX"; // LIVE PRICE ID
 
-    const data = await res.json();
+    document.getElementById("subscribe").onclick = async () => {
+      const email = document.getElementById("email").value;
+      const errorDiv = document.getElementById("error");
+      errorDiv.textContent = "";
 
-    if (!data.clientSecret) {
-      errorDiv.textContent = data.error || "Server error";
-      return;
-    }
+      if (!email) {
+        errorDiv.textContent = "Please enter an email.";
+        return;
+      }
 
-    const result = await stripe.confirmCardPayment(data.clientSecret);
+      const { paymentMethod, error } = await stripe.createPaymentMethod({
+        type: "card",
+        card,
+        billing_details: { email }
+      });
 
-    if (result.error) {
-      errorDiv.textContent = result.error.message;
-    } else {
-      alert("✅ Subscription active");
-    }
-  };
-</script>
+      if (error) {
+        errorDiv.textContent = error.message;
+        return;
+      }
+
+      const res = await fetch("/api/create-subscription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentMethodId: paymentMethod.id,
+          email,
+          priceId: PRICE_ID
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.clientSecret) {
+        errorDiv.textContent = data.error || "Server error";
+        return;
+      }
+
+      const result = await stripe.confirmCardPayment(data.clientSecret);
+
+      if (result.error) {
+        errorDiv.textContent = result.error.message;
+      } else {
+        alert("✅ Subscription active");
+      }
+    };
+  </script>
+</body>
+</html>
