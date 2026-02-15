@@ -17,7 +17,6 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       color: white;
     }
-
     .box {
       width: 520px;
       padding: 36px;
@@ -25,18 +24,8 @@
       background: rgba(15, 23, 42, 0.96);
       box-shadow: 0 30px 80px rgba(0,0,0,0.6);
     }
-
-    h1 {
-      text-align: center;
-      margin-bottom: 6px;
-    }
-
-    p {
-      text-align: center;
-      opacity: 0.8;
-      margin-bottom: 28px;
-    }
-
+    h1 { text-align: center; margin-bottom: 6px; }
+    p { text-align: center; opacity: 0.8; margin-bottom: 28px; }
     input {
       width: 100%;
       padding: 14px;
@@ -48,11 +37,7 @@
       color: #ffffff;
       outline: none;
     }
-
-    input::placeholder {
-      color: #94a3b8;
-    }
-
+    input::placeholder { color: #94a3b8; }
     #card-element {
       padding: 14px;
       border-radius: 12px;
@@ -60,7 +45,6 @@
       margin-bottom: 18px;
       border: 1px solid #1e293b;
     }
-
     button {
       width: 100%;
       padding: 16px;
@@ -72,17 +56,13 @@
       cursor: pointer;
       font-weight: 600;
     }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
     .error {
       color: #f87171;
       margin-top: 14px;
       text-align: center;
       min-height: 20px;
+      white-space: pre-wrap;
     }
   </style>
 </head>
@@ -90,84 +70,111 @@
 <body>
   <div class="box">
     <h1>Purchase — $1 Purchase USD</h1>
-    <p>By proceeding, you agree to Octo’s Terms of Service and Privacy Policy.
-All purchases are final unless otherwise required by law. Prices are in USD and may include applicable taxes or payment provider fees.</p>
+    <p>
+      By proceeding, you agree to Octo’s Terms of Service and Privacy Policy.
+      All purchases are final unless otherwise required by law. Prices are in USD and may include applicable taxes or payment provider fees.
+    </p>
 
     <input id="email" type="email" placeholder="Email" />
-
     <div id="card-element"></div>
-
     <button id="subscribe">Purchase</button>
-
     <div class="error" id="error"></div>
   </div>
 
   <script>
-    // 🔑 LIVE PUBLIC KEY
+    // ✅ If checkout.html is hosted in the SAME Vercel project as /api, leave API_BASE = "".
+    // ✅ If checkout.html is hosted in a DIFFERENT project, set API_BASE to your backend domain:
+    // const API_BASE = "https://backend-seven-omega-96.vercel.app";
+    const API_BASE = "";
+
     const stripe = Stripe("pk_live_51QgJtKGArPaaY8q7CadgdhLJRrjsUr5whYGwhd6mgL2YzPnrbOLfYyf5wsxuPdjWZmBB1BiAoZJScKMDz5RJ0CxM00GQZ0wLmM");
 
     const elements = stripe.elements();
     const card = elements.create("card", {
       style: {
-        base: {
-          color: "#ffffff",
-          fontSize: "16px",
-          "::placeholder": { color: "#94a3b8" }
-        },
+        base: { color: "#ffffff", fontSize: "16px", "::placeholder": { color: "#94a3b8" } },
         invalid: { color: "#f87171" }
       }
     });
-
     card.mount("#card-element");
 
-    // 🔑 LIVE PRICE ID
     const PRICE_ID = "price_1T1E41GArPaaY8q7X0O6eqCE";
 
-    document.getElementById("subscribe").onclick = async () => {
-      const email = document.getElementById("email").value;
-      const errorDiv = document.getElementById("error");
-      errorDiv.textContent = "";
+    const btn = document.getElementById("subscribe");
+    const errorDiv = document.getElementById("error");
 
-      if (!email) {
-        errorDiv.textContent = "Please enter an email.";
-        return;
-      }
+    function setError(msg) {
+      errorDiv.textContent = msg || "";
+    }
 
-      const { paymentMethod, error } = await stripe.createPaymentMethod({
-        type: "card",
-        card,
-        billing_details: { email }
-      });
+    btn.onclick = async () => {
+      try {
+        setError("");
+        btn.disabled = true;
+        btn.textContent = "Processing...";
 
-      if (error) {
-        errorDiv.textContent = error.message;
-        return;
-      }
+        const email = document.getElementById("email").value.trim();
+        if (!email) {
+          setError("Please enter an email.");
+          return;
+        }
 
-      const res = await fetch("/api/create-subscription", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentMethodId: paymentMethod.id,
-          email,
-          priceId: PRICE_ID
-        })
-      });
+        const { paymentMethod, error } = await stripe.createPaymentMethod({
+          type: "card",
+          card,
+          billing_details: { email }
+        });
 
-      const data = await res.json();
+        if (error) {
+          setError(error.message);
+          return;
+        }
 
-      if (!data.clientSecret) {
-        errorDiv.textContent = data.error || "Server error";
-        return;
-      }
+        const res = await fetch(`${API_BASE}/api/create-subscription`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentMethodId: paymentMethod.id,
+            email,
+            priceId: PRICE_ID
+          })
+        });
 
-      const result = await stripe.confirmCardPayment(data.clientSecret);
+        // ✅ Read as text first, then JSON-parse safely (prevents "Unexpected token" crashes)
+        const raw = await res.text();
+        let data = null;
+        try { data = JSON.parse(raw); } catch (_) {}
 
-      if (result.error) {
-        errorDiv.textContent = result.error.message;
-      } else {
-        // ✅ SUCCESS REDIRECT
-        window.location.href = "/success.html";
+        if (!res.ok) {
+          // Show whatever the server returned (JSON or not)
+          const message =
+            (data && (data.error || data.message)) ||
+            raw ||
+            `Server error: ${res.status}`;
+          setError(message);
+          console.error("Server error:", res.status, raw);
+          return;
+        }
+
+        if (!data || !data.clientSecret) {
+          setError((data && (data.error || data.message)) || "Server did not return clientSecret.");
+          console.error("Bad JSON payload:", data, raw);
+          return;
+        }
+
+        const result = await stripe.confirmCardPayment(data.clientSecret);
+
+        if (result.error) {
+          setError(result.error.message);
+        } else {
+          window.location.href = "/success.html";
+        }
+      } catch (e) {
+        console.error(e);
+        setError("Unexpected error. Check console + Vercel runtime logs.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Purchase";
       }
     };
   </script>
